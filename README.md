@@ -1,4 +1,4 @@
-# Digital Chaos Lab
+# A virtual Lab for testing system design 
 
 Real-time distributed system failure propagation simulator with chaos injection.
 
