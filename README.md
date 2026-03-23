@@ -1,5 +1,4 @@
-# Digital Chaos Lab v2
-
+# SYSTEM_DESIGN_SIMULATOR
 Real-time distributed system observability platform with chaos injection, anomaly detection, and predictive alerting.
 
 ## What's New in v2
