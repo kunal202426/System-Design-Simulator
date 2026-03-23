@@ -34,12 +34,12 @@ const ConfigPanel = ({ node, onClose, onUpdate }) => {
     <div style={{
       position: 'absolute',
       top: 0,
-      right: 0,
+      right: '60px',
       width: '320px',
       height: '100%',
-      backgroundColor: '#111827',
+      backgroundColor: '#1a1f2e',
       borderLeft: '1px solid #374151',
-      zIndex: 10,
+      zIndex: 900,
       display: 'flex',
       flexDirection: 'column',
       overflowY: 'auto'

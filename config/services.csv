@@ -1,0 +1,9 @@
+service_id,service_name,service_type,api_endpoint,auth_token,max_capacity,warn_threshold_pct,critical_threshold_pct,slo_latency_p99_ms,slo_error_rate_pct,depends_on,metric_paths
+lb-01,Load Balancer,lb,,, 1000,70,90,100,0.5,,{}
+api-01,API Service 1,api,,, 500,70,90,500,1.0,lb-01,{}
+api-02,API Service 2,api,,, 500,70,90,500,1.0,lb-01,{}
+cache-01,Redis Cache,cache,,,2000,60,85,20,0.1,"api-01,api-02",{}
+db-01,Primary Database,db,,,200,65,85,200,0.5,"api-01,api-02",{}
+queue-01,Message Queue,queue,,,1500,70,90,50,0.5,"api-01,api-02",{}
+worker-01,Worker Pool A,worker,,,100,70,90,500,2.0,queue-01,{}
+worker-02,Worker Pool B,worker,,,100,70,90,500,2.0,queue-01,{}

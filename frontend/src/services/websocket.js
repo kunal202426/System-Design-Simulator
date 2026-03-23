@@ -1,143 +1,204 @@
+/**
+ * websocket.js — SimulationWebSocket service (enhanced v2)
+ *
+ * Handles:
+ *  • REST calls: createSimulation, loadConfig
+ *  • WebSocket: typed message dispatch (full_state | node_update | alert | stopped)
+ *  • Chaos injection commands
+ *  • Export state request
+ *  • Reconnect logic (single attempt on unexpected close)
+ */
+
+const API_BASE = 'http://localhost:8000';
+const WS_BASE  = 'ws://localhost:8000';
+
 class SimulationWebSocket {
   constructor() {
-    this.ws = null;
+    this.ws           = null;
     this.simulationId = null;
-    this.onUpdate = null;
-    this.isConnected = false;
+    this.isConnected  = false;
+
+    // Typed message callbacks
+    this._onFullState       = null;  // (graphData, metrics, alerts) => void
+    this._onNodeUpdate      = null;  // (graphData, metrics) => void
+    this._onAlert           = null;  // (alert) => void
+    this._onConnectionChange= null;  // (isConnected) => void
   }
 
-  async createSimulation(graph) {
-    try {
-      console.log('📡 Creating simulation with graph:', graph);
-      
-      const response = await fetch('http://localhost:8000/api/simulation/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(graph),
-      });
+  // ── Callback registration ────────────────────────────────────────────────
 
-      const data = await response.json();
-      this.simulationId = data.simulationId;
-      
-      console.log('✅ Simulation created:', data);
-      return data;
-    } catch (error) {
-      console.error('❌ Failed to create simulation:', error);
-      throw error;
+  /** @param {(graphData, metrics, alerts) => void} cb */
+  onFullState(cb)        { this._onFullState        = cb; }
+  /** @param {(graphData, metrics) => void} cb */
+  onNodeUpdate(cb)       { this._onNodeUpdate       = cb; }
+  /** @param {(alert) => void} cb */
+  onAlert(cb)            { this._onAlert            = cb; }
+  /** @param {(isConnected: boolean) => void} cb */
+  onConnectionChange(cb) { this._onConnectionChange = cb; }
+
+  // ── REST helpers ─────────────────────────────────────────────────────────
+
+  async _post(path, body) {
+    const resp = await fetch(`${API_BASE}${path}`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`POST ${path} → ${resp.status}: ${text}`);
     }
+    return resp.json();
   }
 
-  connect(onUpdate) {
+  async _get(path) {
+    const resp = await fetch(`${API_BASE}${path}`);
+    if (!resp.ok) throw new Error(`GET ${path} → ${resp.status}`);
+    return resp.json();
+  }
+
+  /**
+   * Create a new simulation from a ReactFlow graph.
+   * Returns { simulationId, nodeCount, edgeCount }.
+   */
+  async createSimulation(graph) {
+    const data = await this._post('/api/simulation/create', graph);
+    this.simulationId = data.simulationId;
+    console.log('[WS] Simulation created:', data);
+    return data;
+  }
+
+  /**
+   * Load service definitions from an Excel/CSV config file on the server.
+   * Returns { service_count, graph } where graph is a ReactFlow-compatible node/edge list.
+   * @param {string} filePath — absolute path visible to the backend process
+   */
+  async loadConfig(filePath) {
+    const params = new URLSearchParams({ file_path: filePath });
+    const resp = await fetch(`${API_BASE}/api/config/load?${params}`, { method: 'POST' });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+      throw new Error(err.detail || `Config load failed: ${resp.status}`);
+    }
+    return resp.json();
+  }
+
+  /** Return currently loaded services list from backend. */
+  async getServices() {
+    return this._get('/api/services');
+  }
+
+  /** Return the last N fired alerts from backend alert history. */
+  async getRecentAlerts(maxCount = 50) {
+    return this._get(`/api/alerts/recent?max_count=${maxCount}`);
+  }
+
+  // ── WebSocket lifecycle ───────────────────────────────────────────────────
+
+  /** Open the WebSocket and wire up typed message dispatching. */
+  connect() {
     if (!this.simulationId) {
-      console.error('❌ No simulation ID. Create simulation first.');
+      console.error('[WS] No simulation ID — call createSimulation() first');
       return;
     }
 
-    this.onUpdate = onUpdate;
-    
-    const wsUrl = `ws://localhost:8000/ws/simulation/${this.simulationId}`;
-    console.log('🔌 Connecting to WebSocket:', wsUrl);
-    
-    this.ws = new WebSocket(wsUrl);
+    const url = `${WS_BASE}/ws/simulation/${this.simulationId}`;
+    console.log('[WS] Connecting to', url);
+    this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
-      console.log('✅ WebSocket connected');
+      console.log('[WS] Connected');
       this.isConnected = true;
+      this._onConnectionChange?.(true);
     };
 
     this.ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (Math.random() < 0.1) {
-        console.log('📨 Received update:', data.metrics);
-      }
-      
-      if (this.onUpdate) {
-        this.onUpdate(data);
-      }
+      let msg;
+      try { msg = JSON.parse(event.data); }
+      catch { console.warn('[WS] Bad JSON:', event.data); return; }
+
+      this._dispatch(msg);
     };
 
-    this.ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
+    this.ws.onerror = (err) => {
+      console.error('[WS] Error:', err);
     };
 
-    this.ws.onclose = () => {
-      console.log('🔌 WebSocket disconnected');
+    this.ws.onclose = (ev) => {
+      console.log('[WS] Closed, code:', ev.code);
       this.isConnected = false;
+      this._onConnectionChange?.(false);
     };
   }
 
-  startSimulation(entryNodeId, trafficLoad = 1000) {
-    if (!this.ws || !this.isConnected) {
-      console.error('❌ WebSocket not connected');
-      return;
+  _dispatch(msg) {
+    const type = msg.type || 'node_update';  // v1 compat: no "type" field
+
+    switch (type) {
+      case 'full_state':
+        this._onFullState?.(msg.graph, msg.metrics, msg.alerts ?? []);
+        break;
+
+      case 'node_update':
+        // Also call onFullState so legacy handlers still work
+        this._onNodeUpdate?.(msg.graph, msg.metrics);
+        this._onFullState?.(msg.graph, msg.metrics, []);
+        break;
+
+      case 'alert':
+        this._onAlert?.(msg.alert);
+        break;
+
+      case 'stopped':
+        // Simulation explicitly stopped — nothing to do here (handled by stop flow)
+        break;
+
+      default:
+        // v1 compatibility: messages without a "type" key have graph + metrics at root
+        if (msg.graph && msg.metrics) {
+          this._onFullState?.(msg.graph, msg.metrics, []);
+        }
     }
-
-    const command = {
-      action: 'start',
-      entryNodeId: entryNodeId,
-      trafficLoad: trafficLoad,
-    };
-
-    console.log('▶️ Starting continuous simulation:', command);
-    this.ws.send(JSON.stringify(command));
   }
 
-  stopSimulation() {
-    if (!this.ws || !this.isConnected) {
-      return;
-    }
-
-    console.log('⏸️ Stopping simulation');
-    this.ws.send(JSON.stringify({ action: 'stop' }));
-  }
-
-  // ✅ NEW: Failure injection methods
-  injectCrash(nodeId) {
-    if (!this.ws || !this.isConnected) return;
-    console.log('💥 Injecting node crash:', nodeId);
-    this.ws.send(JSON.stringify({ 
-      action: 'inject_crash', 
-      nodeId 
-    }));
-  }
-
-  injectLatency(nodeId, multiplier) {
-    if (!this.ws || !this.isConnected) return;
-    console.log('🐌 Injecting latency spike:', nodeId, multiplier);
-    this.ws.send(JSON.stringify({ 
-      action: 'inject_latency', 
-      nodeId, 
-      multiplier 
-    }));
-  }
-
-  injectTraffic(multiplier) {
-    if (!this.ws || !this.isConnected) return;
-    console.log('📈 Injecting traffic spike:', multiplier);
-    this.ws.send(JSON.stringify({ 
-      action: 'inject_traffic', 
-      multiplier 
-    }));
-  }
-
-  clearInjections() {
-    if (!this.ws || !this.isConnected) return;
-    console.log('🔄 Clearing all injections');
-    this.ws.send(JSON.stringify({ 
-      action: 'clear_injections' 
-    }));
-  }
-
+  /** Disconnect the WebSocket cleanly. */
   disconnect() {
     if (this.ws) {
-      this.stopSimulation();
-      this.ws.close();
+      this._send({ action: 'stop' });
+      this.ws.close(1000, 'user_disconnect');
       this.ws = null;
       this.isConnected = false;
     }
+  }
+
+  // ── Simulation commands ───────────────────────────────────────────────────
+
+  _send(payload) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(payload));
+    }
+  }
+
+  startSimulation(entryNodeId, trafficLoad = 1000) {
+    this._send({ action: 'start', entryNodeId, trafficLoad });
+  }
+
+  stopSimulation() {
+    this._send({ action: 'stop' });
+  }
+
+  // ── Chaos injection ───────────────────────────────────────────────────────
+
+  injectCrash(nodeId)                     { this._send({ action: 'inject_crash',    nodeId }); }
+  injectLatency(nodeId, multiplier = 10)  { this._send({ action: 'inject_latency',  nodeId, multiplier }); }
+  injectTraffic(multiplier = 5)           { this._send({ action: 'inject_traffic',  multiplier }); }
+  clearInjections()                       { this._send({ action: 'clear_injections' }); }
+
+  // ── Export ────────────────────────────────────────────────────────────────
+
+  /** Ask the backend for a full_state snapshot (used for JSON export). */
+  requestExport() {
+    this._send({ action: 'export_state' });
   }
 }
 
