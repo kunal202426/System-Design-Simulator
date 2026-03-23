@@ -64,7 +64,7 @@ Services:
 ## Loading Services from Excel/CSV
 
 1. Edit `config/services.csv` (or create a `.xlsx` file with the same columns)
-2. In the UI toolbar click **📂 Config** and enter the file path (relative to where the backend runs, e.g. `../config/services.csv`)
+2. In the UI toolbar click **Config** and enter the file path (relative to where the backend runs, e.g. `../config/services.csv`)
 3. The node graph is auto-built from the dependency relationships
 
 ### Config Schema
