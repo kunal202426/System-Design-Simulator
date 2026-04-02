@@ -22,7 +22,7 @@ git add .
 
 REM Commit
 echo Creating commit...
-git commit -m "fix: remove vercel.json and finalize deployment config" -m "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+git commit -m "fix: remove vercel.json and finalize deployment config"
 
 REM Push
 echo Pushing to GitHub...
