@@ -288,7 +288,21 @@ function AppInner() {
       simulationWS.onNodeUpdate((g, m) => applyGraph(g, m));
       simulationWS.onAlert(a => handleAlert(a));
       simulationWS.connect();
-      await new Promise(r => setTimeout(r, 400));
+      
+      // Wait for WebSocket to be fully open before starting
+      await new Promise((resolve) => {
+        const checkConnection = () => {
+          if (simulationWS.ws?.readyState === WebSocket.OPEN) {
+            console.log('[App] WebSocket is OPEN, starting simulation...');
+            resolve();
+          } else {
+            console.log('[App] WebSocket not ready, waiting... State:', simulationWS.ws?.readyState);
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+      });
+      
       simulationWS.startSimulation(entryId, trafficLoad);
       setIsRunning(true);
     } catch (err) {
