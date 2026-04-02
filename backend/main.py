@@ -13,12 +13,13 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import time
 import traceback
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.node import SystemGraph
@@ -42,25 +43,46 @@ logger = logging.getLogger(__name__)
 # ── App ────────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Digital Chaos Lab API", version="2.0.0")
 
-# Get frontend URLs from environment, filter out empty strings
-frontend_urls = [url.strip() for url in os.environ.get("FRONTEND_URL", "").split(",") if url.strip()]
-logger.info(f"CORS: Frontend URLs from environment: {frontend_urls}")
+# Build a stable set of explicit origins while still allowing Vercel preview domains by regex.
+def _parse_origin_list(value: str) -> List[str]:
+    return [url.strip().rstrip("/") for url in value.split(",") if url.strip()]
+
+
+frontend_urls = _parse_origin_list(os.environ.get("FRONTEND_URL", ""))
+
+# Render/Vercel commonly expose the production URL without scheme.
+vercel_project_url = os.environ.get("VERCEL_PROJECT_PRODUCTION_URL", "").strip()
+if vercel_project_url:
+    vercel_project_url = vercel_project_url.replace("https://", "").replace("http://", "").strip("/")
+    frontend_urls.append(f"https://{vercel_project_url}")
+
+default_local_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+]
+
+# Keep order while removing duplicates.
+allowed_origins = list(dict.fromkeys(default_local_origins + frontend_urls))
+logger.info("CORS: explicit allowed origins = %s", allowed_origins)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        # Allow production frontend URLs from environment variable
-        *frontend_urls,
-    ],
+    # Allow all Vercel deployment URLs (preview + production).
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)*vercel\.app",
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 logger.info(f"CORS: Allowed origins configured")
+
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(rest_of_path: str):
+    """Ensure OPTIONS requests always return quickly in production environments."""
+    return Response(status_code=204)
 
 # ── Global state ───────────────────────────────────────────────────────────────
 active_simulations: Dict[str, SimulationEngine] = {}

@@ -13,7 +13,7 @@ services:
       - key: RUNBOOK_BASE_URL
         value: https://runbooks.example.com
       - key: FRONTEND_URL
-        sync: false
+        value: https://system-design-simulator-82yc8f8hm.vercel.app
       - key: PORT
         generateValue: true
     healthCheckPath: /
