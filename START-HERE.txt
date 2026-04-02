@@ -1,0 +1,135 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🎯 VERCEL DEPLOYMENT - EXACT STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 YOUR FILES ARE READY! Just follow these 5 steps:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: PUSH CODE TO GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 Location: C:\Users\kunal\Desktop\Choas Sim\digital-chaos-lab\
+
+👉 Double-click: DEPLOY-NOW.bat
+
+⏱️ Time: 30 seconds
+
+✅ Wait for: "SUCCESS! Code pushed to GitHub"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: DELETE CURRENT VERCEL PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 Go to: https://vercel.com/dashboard
+
+1. Click your project name
+2. Click "Settings" tab (top)
+3. Click "General" (left sidebar)
+4. Scroll ALL THE WAY DOWN
+5. Click "Delete Project" (red button)
+6. Type project name to confirm
+7. Click "Delete"
+
+⏱️ Time: 30 seconds
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: IMPORT FRESH FROM GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 Vercel Dashboard: https://vercel.com/dashboard
+
+1. Click "Add New" (top right, blue button)
+2. Click "Project"
+3. Find: kunal202426/System-Design-Simulator
+4. Click "Import" button
+
+⏱️ Time: 30 seconds
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: CONFIGURE PROJECT (CRITICAL!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You'll see a configuration page.
+
+⚠️  ONLY SET THESE 2 THINGS:
+
+┌─────────────────────────────────────────────────────┐
+│ 1. ROOT DIRECTORY                                   │
+│    • Click "Edit"                                   │
+│    • Type: frontend                                 │
+│    • Should show: "Root Directory: frontend"        │
+│                                                     │
+│ 2. FRAMEWORK PRESET                                 │
+│    • Should auto-show: "Vite"                       │
+│    • If not, select "Vite" from dropdown            │
+└─────────────────────────────────────────────────────┘
+
+❌ DO NOT TOUCH:
+   • Build Command (leave on default)
+   • Output Directory (leave on default)
+   • Install Command (leave on default)
+   • Development Command (leave on default)
+   • Environment Variables (skip for now)
+
+✅ THEN CLICK: "Deploy" (big blue button)
+
+⏱️ Time: 1 minute
+
+⏳ Wait: 2-3 minutes for build to complete
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5: ADD ENVIRONMENT VARIABLES (After deployment)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After deployment completes:
+
+1. Click your project name (top left)
+2. Click "Settings" tab
+3. Click "Environment Variables" (left sidebar)
+4. Add these TWO variables:
+
+┌─────────────────────────────────────────────────────┐
+│ VARIABLE 1:                                         │
+│ • Name: VITE_API_URL                               │
+│ • Value: https://your-backend.onrender.com         │
+│ • Environments: ☑ Production ☑ Preview ☑ Dev      │
+│ • Click "Save"                                     │
+│                                                     │
+│ VARIABLE 2:                                         │
+│ • Name: VITE_WS_URL                                │
+│ • Value: wss://your-backend.onrender.com           │
+│ • Environments: ☑ Production ☑ Preview ☑ Dev      │
+│ • Click "Save"                                     │
+└─────────────────────────────────────────────────────┘
+
+⚠️  IMPORTANT:
+   • Use https:// for VITE_API_URL
+   • Use wss:// for VITE_WS_URL (NOT ws://)
+   • NO trailing slash at the end
+   • NO quotes around URLs
+
+5. Go to "Deployments" tab
+6. Latest deployment → Three dots (...) → "Redeploy"
+7. Click "Redeploy" to confirm
+
+⏱️ Time: 2 minutes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ SUCCESS CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After final deployment:
+
+□ App loads (not 404, not black screen)
+□ Press F12 → Console shows your backend URL
+□ No "localhost:8000" references
+□ No red CORS errors
+□ App works!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 TOTAL TIME: ~7 minutes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Need help? Check DEPLOYMENT.md for troubleshooting!
+
+START NOW: Double-click DEPLOY-NOW.bat
