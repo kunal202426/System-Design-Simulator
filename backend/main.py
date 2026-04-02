@@ -42,6 +42,10 @@ logger = logging.getLogger(__name__)
 # ── App ────────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Digital Chaos Lab API", version="2.0.0")
 
+# Get frontend URLs from environment, filter out empty strings
+frontend_urls = [url.strip() for url in os.environ.get("FRONTEND_URL", "").split(",") if url.strip()]
+logger.info(f"CORS: Frontend URLs from environment: {frontend_urls}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -49,12 +53,14 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         # Allow production frontend URLs from environment variable
-        *os.environ.get("FRONTEND_URL", "").split(","),
+        *frontend_urls,
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger.info(f"CORS: Allowed origins configured")
 
 # ── Global state ───────────────────────────────────────────────────────────────
 active_simulations: Dict[str, SimulationEngine] = {}
