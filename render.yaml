@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: digital-chaos-lab-api
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: RUNBOOK_BASE_URL
+        value: https://runbooks.example.com
+      - key: FRONTEND_URL
+        sync: false
+      - key: PORT
+        generateValue: true
+    healthCheckPath: /
+
+# NOTE: After deploying to Render, you need to:
+# 1. Copy the Render service URL (e.g., https://digital-chaos-lab-api.onrender.com)
+# 2. Set it as VITE_API_URL in Vercel environment variables
+# 3. Set wss://digital-chaos-lab-api.onrender.com as VITE_WS_URL in Vercel
+# 4. Set your Vercel frontend URL as FRONTEND_URL in Render environment variables

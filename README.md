@@ -149,3 +149,107 @@ FastAPI Backend
   ├── anomaly_detector   — Z-score + linear regression
   └── alert_manager      — Slack webhooks + dedup
 ```
+
+---
+
+## Production Deployment
+
+### Deploy to Vercel (Frontend) + Render (Backend)
+
+#### Step 1: Deploy Backend to Render
+
+1. **Connect your GitHub repository** to Render:
+   - Go to [Render Dashboard](https://dashboard.render.com/)
+   - Click "New +" → "Blueprint"
+   - Connect your repository: `https://github.com/kunal202426/System-Design-Simulator`
+   - Render will automatically detect `render.yaml`
+
+2. **Set environment variables** in Render dashboard:
+   ```bash
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   RUNBOOK_BASE_URL=https://runbooks.example.com
+   FRONTEND_URL=https://your-app.vercel.app
+   ```
+
+3. **Copy your Render backend URL** after deployment:
+   ```
+   Example: https://digital-chaos-lab-api.onrender.com
+   ```
+
+#### Step 2: Deploy Frontend to Vercel
+
+1. **Connect your GitHub repository** to Vercel:
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "Add New" → "Project"
+   - Import your repository: `https://github.com/kunal202426/System-Design-Simulator`
+   - Vercel will automatically detect the configuration from `vercel.json`
+
+2. **Set environment variables** in Vercel dashboard:
+   ```bash
+   VITE_API_URL=https://digital-chaos-lab-api.onrender.com
+   VITE_WS_URL=wss://digital-chaos-lab-api.onrender.com
+   ```
+   ⚠️ **Important**: Use `wss://` (not `ws://`) for WebSocket URL in production!
+
+3. **Deploy** and copy your Vercel frontend URL
+
+#### Step 3: Update CORS Configuration
+
+Go back to **Render dashboard** and update the `FRONTEND_URL` environment variable:
+```bash
+FRONTEND_URL=https://your-app.vercel.app
+```
+
+Redeploy the backend service for CORS changes to take effect.
+
+---
+
+### Alternative: Deploy with Docker
+
+Both frontend and backend can be deployed using Docker:
+
+```bash
+# Build and run with docker-compose
+docker-compose up --build
+
+# Or deploy to any Docker-compatible platform:
+# - Railway.app
+# - Fly.io
+# - Google Cloud Run
+# - AWS ECS
+```
+
+**Environment variables for Docker deployment:**
+- Set `VITE_API_URL` and `VITE_WS_URL` as build args for frontend
+- Set `PORT`, `SLACK_WEBHOOK_URL`, `FRONTEND_URL` for backend container
+
+---
+
+### Deployment Checklist
+
+- [ ] Backend deployed to Render (or Docker platform)
+- [ ] Backend URL copied
+- [ ] Frontend environment variables set in Vercel
+- [ ] Frontend deployed to Vercel
+- [ ] Frontend URL copied
+- [ ] Backend CORS updated with frontend URL
+- [ ] WebSocket connection tested (check browser console)
+- [ ] Slack webhook tested (optional)
+
+---
+
+### Troubleshooting
+
+**Issue**: WebSocket connection fails with "Mixed Content" error  
+**Solution**: Ensure you're using `wss://` (not `ws://`) in `VITE_WS_URL`
+
+**Issue**: CORS errors in browser console  
+**Solution**: Add your Vercel URL to `FRONTEND_URL` in Render environment variables
+
+**Issue**: Backend fails to start on Render  
+**Solution**: Check Render logs. Ensure all required dependencies are in `requirements.txt`
+
+**Issue**: Frontend shows "localhost:8000" in production  
+**Solution**: Verify `VITE_API_URL` and `VITE_WS_URL` are set in Vercel environment variables
+
+---

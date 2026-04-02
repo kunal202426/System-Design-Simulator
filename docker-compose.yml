@@ -10,11 +10,15 @@ services:
     environment:
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
       - RUNBOOK_BASE_URL=${RUNBOOK_BASE_URL:-https://runbooks.example.com}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - PORT=8000
     volumes:
       - ./config:/app/config:ro
-    depends_on:
-      redis:
-        condition: service_healthy
+    # Redis dependency removed - not currently used by application
+    # To use Redis in future, uncomment the depends_on section below
+    # depends_on:
+    #   redis:
+    #     condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -22,25 +26,30 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
     depends_on:
       - backend
     restart: unless-stopped
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
+  # Redis service - commented out since it's not currently used by the application
+  # Uncomment this section if you need Redis for caching or session storage
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
+  #   restart: unless-stopped
 
-volumes:
-  redis_data:
-    driver: local
+# volumes:
+#   redis_data:
+#     driver: local
