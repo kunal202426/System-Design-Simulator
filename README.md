@@ -1,25 +1,24 @@
-# Digital Chaos Lab v2
-
+# SYSTEM_DESIGN_SIMULATOR
 Real-time distributed system observability platform with chaos injection, anomaly detection, and predictive alerting.
 
-## What's New in v2
+v2
 
-| Feature | Status |
+| Features added
 |---|---|
-| Excel/CSV config → auto-built node graph | ✅ |
-| Live API polling (async aiohttp) | ✅ |
-| Z-score anomaly detection (3σ) | ✅ |
-| Linear regression breach prediction | ✅ |
-| Cascade pattern detection | ✅ |
-| Slack webhook alerts | ✅ |
-| Alert deduplication / cooldown | ✅ |
-| Alert toast notifications (UI) | ✅ |
-| Sparkline history charts (UI) | ✅ |
-| Prediction countdown timers on nodes | ✅ |
-| Filter by service type | ✅ |
-| Export state to JSON | ✅ |
-| Dark / light mode toggle | ✅ |
-| Docker Compose (backend + Redis) | ✅ |
+| Excel/CSV config → auto-built node graph 
+| Live API polling (async aiohttp)
+| Z-score anomaly detection (3σ)
+| Linear regression breach prediction
+| Cascade pattern detection 
+| Slack webhook alerts 
+| Alert deduplication / cooldown
+| Alert toast notifications (UI) 
+| Sparkline history charts (UI)
+| Prediction countdown timers on nodes 
+| Filter by service type
+| Export state to JSON 
+| Dark / light mode toggle
+| Docker Compose (backend + Redis) 
 
 ---
 
@@ -54,17 +53,10 @@ export SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 docker-compose up --build
 ```
 
-Services:
-- `backend` → http://localhost:8000
-- `frontend` → http://localhost:5173
-- `redis` → localhost:6379
-
----
-
 ## Loading Services from Excel/CSV
 
 1. Edit `config/services.csv` (or create a `.xlsx` file with the same columns)
-2. In the UI toolbar click **📂 Config** and enter the file path (relative to where the backend runs, e.g. `../config/services.csv`)
+2. In the UI toolbar click **Config** and enter the file path (relative to where the backend runs, e.g. `../config/services.csv`)
 3. The node graph is auto-built from the dependency relationships
 
 ### Config Schema
@@ -140,14 +132,14 @@ python -m pytest ../tests/test_polling.py -v
 
 ```
 Browser (React + ReactFlow)
-  ↕ WebSocket (full_state / node_update / alert)
+  WebSocket (full_state / node_update / alert)
 FastAPI Backend
-  ├── SimulationEngine   — M/M/1 queue theory physics
-  ├── excel_loader       — CSV/XLSX → node graph
-  ├── api_poller         — async HTTP polling (aiohttp)
-  ├── normalizer         — unified metric schema
-  ├── anomaly_detector   — Z-score + linear regression
-  └── alert_manager      — Slack webhooks + dedup
+  - SimulationEngine
+  - excel_loader       
+  - api_poller         
+  - normalizer         
+  - anomaly_detector  
+  - alert_manager     
 ```
 
 ---
