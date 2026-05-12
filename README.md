@@ -1,63 +1,113 @@
-<div align="center">
-  <h1>🖥️ System Design Simulator — Digital Chaos Lab</h1>
-  <p><strong>Real-time distributed system observability platform with chaos injection, anomaly detection, and predictive alerting</strong></p>
+# System Design Simulator
 
-  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB"/>
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white"/>
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge"/>
+A distributed systems simulation platform designed to model service interactions, inject failures and observe cascading behavior in real time.
 
-  <br/><br/>
-  <a href="https://github.com/kunal202426/System-Design-Simulator/issues">🐛 Report Bug</a> &nbsp;•&nbsp;
-  <a href="https://github.com/kunal202426/System-Design-Simulator">⭐ Star this repo</a>
-</div>
+The project focuses on understanding how modern microservice-based systems behave under load, failure and changing traffic conditions.
 
 ---
 
-## 📖 Overview
+## Overview
 
-Digital Chaos Lab is a real-time distributed system simulator that lets you model microservice architectures, inject failures, and observe cascading effects — all from a browser UI. Built with FastAPI + WebSockets for live streaming metrics, and React + ReactFlow for interactive node graph visualization.
+The simulator combines a FastAPI backend with a React-based visualization layer to create an interactive environment for experimenting with distributed system concepts.
 
----
+It supports:
+- live service monitoring
+- dependency visualization
+- anomaly detection
+- simulated cascading failures
+- alerting workflows
 
-## ✨ Features (v2)
-
-| Feature | Description |
-|---------|-------------|
-| 📄 Excel/CSV Config | Auto-builds node graph from config file |
-| 📡 Live API Polling | Async `aiohttp` poller for real service metrics |
-| 🚨 Anomaly Detection | Z-score based 3σ anomaly flagging |
-| 🔮 Breach Prediction | Linear regression countdown timers on nodes |
-| 🌊 Cascade Detection | Detects cascading failure patterns |
-| 🔔 Slack Alerts | Webhook alerts with deduplication & cooldown |
-| 📊 Sparkline Charts | Live history charts per node |
-| 🎨 Dark/Light Mode | UI theme toggle |
-| 📤 JSON Export | Export full simulation state |
-| 🐳 Docker Compose | Full-stack backend + Redis in one command |
+Instead of being a production observability platform, the goal is to provide a controllable environment for learning and experimentation.
 
 ---
 
-## 🛠️ Tech Stack
+## System Architecture
+
+### Frontend Layer
+Responsible for:
+- graph visualization
+- real-time node updates
+- displaying alerts and metrics
+- interaction with simulation controls
+
+The frontend uses ReactFlow to represent services and dependencies as a dynamic graph.
+
+---
+
+### Backend Layer
+Handles:
+- simulation logic
+- metric aggregation
+- API polling
+- event processing
+- WebSocket streaming
+
+FastAPI and asynchronous processing are used to support real-time updates.
+
+---
+
+### Detection & Analysis Layer
+Includes:
+- anomaly detection using statistical thresholds
+- breach prediction logic
+- cascading failure tracking
+- alert generation and cooldown management
+
+The intent is to mimic patterns seen in large distributed systems.
+
+---
+
+### Data & Cache Layer
+Redis is used for:
+- temporary state management
+- deduplication
+- alert coordination
+
+---
+
+## Core Features
+
+### Real-Time Simulation
+- service graph updates
+- traffic/load visualization
+- dependency monitoring
+
+### Failure Injection
+- simulate unhealthy services
+- observe propagation effects
+- analyze bottlenecks
+
+### Monitoring & Alerts
+- anomaly detection
+- threshold breaches
+- Slack/webhook notifications
+
+### Visualization
+- node graph representation
+- sparkline metrics
+- live updates through WebSockets
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Python, FastAPI, WebSockets, aiohttp |
+| Backend | Python, FastAPI, aiohttp, WebSockets |
 | Frontend | React, ReactFlow, TypeScript |
 | Cache | Redis |
-| Deployment | Docker Compose, Vercel (frontend), Render (backend) |
-| Alerts | Slack Webhooks |
+| Deployment | Docker Compose |
+| Alerting | Slack Webhooks |
 
 ---
 
-## 🚀 Quick Start (Local Dev)
+## Running Locally
 
 ### Backend
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
@@ -66,81 +116,56 @@ uvicorn main:app --reload --port 8000
 ```bash
 cd frontend
 npm install
-npm run dev    # http://localhost:5173
+npm run dev
 ```
 
-### Docker (Full Stack)
+### Docker
 ```bash
-export SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 docker-compose up --build
 ```
 
 ---
 
-## 📄 Config Schema (CSV/Excel)
+## Simulation Flow
 
-| Column | Description |
-|--------|-------------|
-| `service_id` | Unique node identifier |
-| `service_name` | Display name |
-| `service_type` | `lb` / `api` / `cache` / `db` / `queue` / `worker` |
-| `api_endpoint` | URL to poll for live metrics |
-| `max_capacity` | Max requests/second |
-| `warn_threshold_pct` | Warning load % (default 70) |
-| `critical_threshold_pct` | Critical load % (default 90) |
-| `slo_latency_p99_ms` | P99 latency SLO in ms |
-| `depends_on` | Comma-separated upstream service IDs |
+1. Services are loaded from configuration
+2. Dependencies are mapped into a graph
+3. Metrics are streamed and updated
+4. Detection systems analyze behavior
+5. Alerts are generated if thresholds are breached
+6. Frontend visualizes changes in real time
 
 ---
 
-## 🌐 Environment Variables
+## Design Goals
 
-| Variable | Description |
-|----------|-------------|
-| `SLACK_WEBHOOK_URL` | Slack incoming webhook |
-| `RUNBOOK_BASE_URL` | Base URL for runbook links |
-| `VITE_API_URL` | Backend API URL (frontend) |
-| `VITE_WS_URL` | WebSocket URL (use `wss://` in prod) |
-
----
-
-## 🔌 API Reference
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/config/load?file_path=…` | Load Excel/CSV config |
-| `GET` | `/api/config/graph` | Get auto-built node graph |
-| `GET` | `/api/alerts/recent` | Last N fired alerts |
-| `GET` | `/api/alerts/active` | Active alerts |
-| `WS` | `/ws/simulation/{sim_id}` | Live simulation stream |
+The project was designed to explore:
+- distributed systems behavior
+- observability patterns
+- service dependency modeling
+- real-time visualization pipelines
+- fault propagation
 
 ---
 
-## 🧪 Tests
+## Limitations
 
-```bash
-cd backend
-python -m pytest ../tests/test_polling.py -v
-```
-21 tests covering excel_loader, normalizer, anomaly_detector, alert_manager, and api_poller.
+- simulation accuracy is simplified
+- not intended for production monitoring
+- large-scale graphs may require optimization
 
 ---
 
-## 📁 Architecture
+## Future Improvements
 
-```
-Browser (React + ReactFlow)
-    └── WebSocket → FastAPI Backend
-            ├── SimulationEngine
-            ├── excel_loader
-            ├── api_poller (aiohttp)
-            ├── anomaly_detector (Z-score)
-            ├── alert_manager (Slack)
-            └── Redis (deduplication)
-```
+- distributed event simulation
+- advanced fault injection strategies
+- ML-assisted anomaly prediction
+- historical replay and timeline analysis
+- multi-region simulation support
 
 ---
 
-## 📄 License
+## License
 
-MIT © [Kunal Mathur](https://github.com/kunal202426)
+MIT © Kunal Mathur
